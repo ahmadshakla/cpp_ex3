@@ -220,6 +220,16 @@ public:
         _currSize = 0;
     }
 
+    class iterator
+    {
+    private:
+        std::pair<KeyT,ValueT>* _pointer;
+    public:
+        explicit iterator( std::pair<KeyT,ValueT>* N = nullptr) : _pointer(N) { }
+        std::pair<KeyT,ValueT>& operator*() const { return _pointer->first; }
+        std::pair<KeyT,ValueT>* operator->() const { return &_pointer->first; }
+    };
+
 
 };
 
