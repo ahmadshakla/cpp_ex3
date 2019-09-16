@@ -58,6 +58,11 @@ public:
             : _lowerLoadFactor(lowerLoadFactor), _upperLoadFactor(upperLoadFactor),
               _capacity{16}, _currSize(0)
     {
+        if (lowerLoadFactor > upperLoadFactor || upperLoadFactor > 1 || upperLoadFactor < 0 ||
+            lowerLoadFactor < 0 || lowerLoadFactor > 1)
+        {
+            // TODO exception
+        }
         _hashMap = new std::vector<std::pair<KeyT, ValueT> >[16];
     }
 
@@ -189,8 +194,30 @@ public:
             }
         }
         return false;
+    }
 
+    /**
+     * returns the size of the bucket that the wanted key exists in
+     * @param key the key the we want to get it's bucket size
+     * @return the number of elements in that bucket
+     */
+    const int bucketSize(const KeyT &key) const
+    {
+        size_t hashedIndex = std::hash<KeyT>{}(key);
+        hashedIndex = reIndex(hashedIndex, _capacity);
+        return _hashMap[hashedIndex].size();
+    }
 
+    /**
+     * clears all the map, doesn't affect the capacity.
+     */
+    void clear()
+    {
+        for (int i = 0; i < _capacity; ++i)
+        {
+            _hashMap[i].clear();
+        }
+        _currSize = 0;
     }
 
 
