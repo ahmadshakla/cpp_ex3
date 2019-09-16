@@ -8,7 +8,6 @@
 #include <vector>
 
 
-
 #ifndef CPP_EX3_HPP
 #define CPP_EX3_HPP
 
@@ -17,17 +16,20 @@ class HashMap
 {
 
 private:
-    std::vector<std::pair<KeyT,ValueT> > *_hashMap ;
+    std::vector<std::pair<KeyT, ValueT> > *_hashMap;
     double _lowerLoadFactor, _upperLoadFactor;
     int _capacity, _currSize;
-    size_t reIndex(size_t hashedIndex){ return hashedIndex & (_capacity -1);}
+
+    const size_t reIndex (size_t hashedIndex) const
+    { return hashedIndex & (_capacity - 1); }
+
 public:
     //-------------------------------------- constructors --------------------------------------
     explicit HashMap(double lowerLoadFactor = 0.25, double upperLoadFactor = 0.75)
             : _lowerLoadFactor(lowerLoadFactor), _upperLoadFactor(upperLoadFactor),
               _capacity{16}, _currSize(0)
     {
-        _hashMap = new std::vector<std::pair<KeyT,ValueT> >[16];
+        _hashMap = new std::vector<std::pair<KeyT, ValueT> >[16];
     }
 
     HashMap(std::vector<KeyT> keysVec, std::vector<ValueT> valuesVec)
@@ -39,7 +41,8 @@ public:
     /**
      * @return the number of elements in the map
      */
-    int size() {
+    const int size() const
+    {
 
         return this->_currSize;
     }
@@ -47,17 +50,20 @@ public:
     /**
      * @return the capacity of the map (the number of elements it can hold)
      */
-    int capacity() { return this->_capacity; }
+    const int capacity() const
+    { return this->_capacity; }
 
     /**
      * @return the load factor of the map, size/capacity
      */
-    double getLoadFactor() { return (double) _currSize / _capacity; }
+    const double getLoadFactor() const
+    { return (double) _currSize / _capacity; }
 
     /**
      * @return whether the map is empty or not
      */
-    bool empty() { return !_currSize; }
+    const bool empty() const
+    { return !_currSize; }
 
     /**
      * adds a new pair to the map
@@ -65,13 +71,13 @@ public:
      * @param value the value of the key
      * @return true if the item was added successfully, false otherwise
      */
-    bool insert(KeyT key,ValueT value)
+    const bool insert(const KeyT &key, const ValueT &value)
     {
         if (containsKey(key))
         {
             return false;
         }
-        std::pair<KeyT,ValueT> newPair(key,value);
+        std::pair<KeyT, ValueT> newPair(key, value);
         size_t hashedVal = std::hash<KeyT>{}(key);
         hashedVal = reIndex(hashedVal);
         _hashMap[hashedVal].push_back(newPair);
@@ -84,16 +90,16 @@ public:
      * @param key the key we want to check
      * @return true if it is already in the map. false otherwise.
      */
-    bool containsKey(KeyT key)
+    bool containsKey(const KeyT &key) const
     {
-        for (int i = 0; i < _capacity; ++i)
+        size_t hashedVal = std::hash<KeyT>{}(key);
+        hashedVal = reIndex(hashedVal);
+
+        for (const std::pair<KeyT, ValueT> &pair : _hashMap[hashedVal])
         {
-            for (const std::pair<KeyT,ValueT> & pair : _hashMap[i])
+            if (pair.first == key)
             {
-                if (pair.first == key)
-                {
-                    return true;
-                }
+                return true;
             }
         }
         return false;
@@ -104,13 +110,18 @@ public:
      * @param key the key of the element that we want to find it's value
      * @return the value of the given key
      */
-    ValueT at(KeyT key)
+     ValueT& at(const KeyT key)
     {
-        // TODO exception
-
+        size_t hashedVal = reIndex(std::hash<KeyT>{}(key));
+        for ( std::pair<KeyT, ValueT> &pair : _hashMap[hashedVal])
+        {
+            if (pair.first == key)
+            {
+                return pair.second;
+            }
+        }
+        throw std::out_of_range("map::at");
     }
-
-
 
 
 };
