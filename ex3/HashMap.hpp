@@ -138,8 +138,13 @@ public:
         hashedVal = reIndex(hashedVal);
         for (int i = 0; i < _hashMap[hashedVal] ; ++i)
         {
-
+            if (_hashMap[hashedVal][i].first == key)
+            {
+                _hashMap[hashedVal].erase(_hashMap[hashedVal].begin() + i);
+                return true;
+            }
         }
+        return false;
 
 
 
