@@ -20,8 +20,37 @@ private:
     double _lowerLoadFactor, _upperLoadFactor;
     int _capacity, _currSize;
 
-    const size_t reIndex (size_t hashedIndex) const
-    { return hashedIndex & (_capacity - 1); }
+    const size_t reIndex(size_t hashedIndex, int mapCapacity) const
+    {
+        return hashedIndex & (mapCapacity - 1);
+    }
+
+    /**
+     * rehashes all the elements of the map to a new map with bigger / smaller size, depending
+     * on the upper / lower factor.
+     * @param newSize the new size we want to give to the new map
+     */
+    void reHash(int newSize)
+    {
+        if (newSize >= 1)
+        {
+            std::vector<std::pair<KeyT, ValueT> > *newHashMap;
+            newHashMap = new std::vector<std::pair<KeyT, ValueT> >[newSize];
+
+            for (int i = 0; i < _capacity; ++i)
+            {
+                for (const std::pair<KeyT, ValueT> &pair : _hashMap[i])
+                {
+                    size_t hashedVal = std::hash<KeyT>{}(pair.first);
+                    hashedVal = reIndex(hashedVal, newSize);
+                    newHashMap[hashedVal].push_back(pair);
+                }
+            }
+            _capacity = newSize;
+            delete[] _hashMap;
+            _hashMap = newHashMap;
+        }
+    }
 
 public:
     //-------------------------------------- constructors --------------------------------------
@@ -33,8 +62,17 @@ public:
     }
 
     HashMap(std::vector<KeyT> keysVec, std::vector<ValueT> valuesVec)
-    // TODO exception
-    {}
+    {
+        if (keysVec.size() != valuesVec.size())
+        {
+            // TODO exception
+        }
+        HashMap();
+        for (int i = 0; i < keysVec.size(); ++i)
+        {
+            insert(keysVec[i], valuesVec[i]);
+        }
+    }
 
     //-------------------------------------- methods --------------------------------------
 
@@ -50,20 +88,17 @@ public:
     /**
      * @return the capacity of the map (the number of elements it can hold)
      */
-    const int capacity() const
-    { return this->_capacity; }
+    const int capacity() const { return this->_capacity; }
 
     /**
      * @return the load factor of the map, size/capacity
      */
-    const double getLoadFactor() const
-    { return (double) _currSize / _capacity; }
+    const double getLoadFactor() const { return (double) _currSize / _capacity; }
 
     /**
      * @return whether the map is empty or not
      */
-    const bool empty() const
-    { return !_currSize; }
+    const bool empty() const { return !_currSize; }
 
     /**
      * adds a new pair to the map
@@ -79,9 +114,13 @@ public:
         }
         std::pair<KeyT, ValueT> newPair(key, value);
         size_t hashedVal = std::hash<KeyT>{}(key);
-        hashedVal = reIndex(hashedVal);
+        hashedVal = reIndex(hashedVal, _capacity);
         _hashMap[hashedVal].push_back(newPair);
         ++_currSize;
+        if (getLoadFactor() > _upperLoadFactor)
+        {
+            reHash(2 * _capacity);
+        }
         return true;
     }
 
@@ -93,7 +132,7 @@ public:
     bool containsKey(const KeyT &key) const
     {
         size_t hashedVal = std::hash<KeyT>{}(key);
-        hashedVal = reIndex(hashedVal);
+        hashedVal = reIndex(hashedVal, _capacity);
 
         for (const std::pair<KeyT, ValueT> &pair : _hashMap[hashedVal])
         {
@@ -110,10 +149,10 @@ public:
      * @param key the key of the element that we want to find it's value
      * @return the value of the given key
      */
-     ValueT& at(const KeyT key)
+    ValueT &at(const KeyT key)
     {
-        size_t hashedVal = reIndex(std::hash<KeyT>{}(key));
-        for ( std::pair<KeyT, ValueT> &pair : _hashMap[hashedVal])
+        size_t hashedVal = reIndex(std::hash<KeyT>{}(key), _capacity);
+        for (std::pair<KeyT, ValueT> &pair : _hashMap[hashedVal])
         {
             if (pair.first == key)
             {
@@ -135,17 +174,21 @@ public:
             return false;
         }
         size_t hashedVal = std::hash<KeyT>{}(key);
-        hashedVal = reIndex(hashedVal);
-        for (int i = 0; i < _hashMap[hashedVal] ; ++i)
+        hashedVal = reIndex(hashedVal, _capacity);
+        for (int i = 0; i < _hashMap[hashedVal].size(); ++i)
         {
             if (_hashMap[hashedVal][i].first == key)
             {
                 _hashMap[hashedVal].erase(_hashMap[hashedVal].begin() + i);
+                --_currSize;
+                if (getLoadFactor() < _lowerLoadFactor)
+                {
+                    reHash(_capacity / 2);
+                }
                 return true;
             }
         }
         return false;
-
 
 
     }
