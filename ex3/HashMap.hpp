@@ -123,6 +123,28 @@ public:
         throw std::out_of_range("map::at");
     }
 
+    /**
+     * removes an element with key "key" from the table
+     * @param key
+     * @return
+     */
+    bool erase(const KeyT &key)
+    {
+        if (!containsKey(key))
+        {
+            return false;
+        }
+        size_t hashedVal = std::hash<KeyT>{}(key);
+        hashedVal = reIndex(hashedVal);
+        for (int i = 0; i < _hashMap[hashedVal] ; ++i)
+        {
+
+        }
+
+
+
+    }
+
 
 };
 
