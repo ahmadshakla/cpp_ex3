@@ -20,7 +20,7 @@ private:
     double _lowerLoadFactor, _upperLoadFactor;
     int _capacity, _currSize;
 
-    const size_t reIndex(size_t hashedIndex, int mapCapacity) const
+    const size_t _reIndex(size_t hashedIndex, int mapCapacity) const
     {
         return hashedIndex & (mapCapacity - 1);
     }
@@ -30,7 +30,7 @@ private:
      * on the upper / lower factor.
      * @param newSize the new size we want to give to the new map
      */
-    void reHash(int newSize)
+    void _reHash(int newSize)
     {
         if (newSize >= 1)
         {
@@ -42,7 +42,7 @@ private:
                 for (const std::pair<KeyT, ValueT> &pair : _hashMap[i])
                 {
                     size_t hashedVal = std::hash<KeyT>{}(pair.first);
-                    hashedVal = reIndex(hashedVal, newSize);
+                    hashedVal = _reIndex(hashedVal, newSize);
                     newHashMap[hashedVal].push_back(pair);
                 }
             }
@@ -127,12 +127,12 @@ public:
         }
         std::pair<KeyT, ValueT> newPair(key, value);
         size_t hashedVal = std::hash<KeyT>{}(key);
-        hashedVal = reIndex(hashedVal, _capacity);
+        hashedVal = _reIndex(hashedVal, _capacity);
         _hashMap[hashedVal].push_back(newPair);
         ++_currSize;
         if (getLoadFactor() > _upperLoadFactor)
         {
-            reHash(2 * _capacity);
+            _reHash(2 * _capacity);
         }
         return true;
     }
@@ -145,7 +145,7 @@ public:
     bool containsKey(const KeyT &key) const
     {
         size_t hashedVal = std::hash<KeyT>{}(key);
-        hashedVal = reIndex(hashedVal, _capacity);
+        hashedVal = _reIndex(hashedVal, _capacity);
 
         for (const std::pair<KeyT, ValueT> &pair : _hashMap[hashedVal])
         {
@@ -164,7 +164,7 @@ public:
      */
     ValueT &at(const KeyT key)
     {
-        size_t hashedVal = reIndex(std::hash<KeyT>{}(key), _capacity);
+        size_t hashedVal = _reIndex(std::hash<KeyT>{}(key), _capacity);
         for (std::pair<KeyT, ValueT> &pair : _hashMap[hashedVal])
         {
             if (pair.first == key)
@@ -187,7 +187,7 @@ public:
             return false;
         }
         size_t hashedVal = std::hash<KeyT>{}(key);
-        hashedVal = reIndex(hashedVal, _capacity);
+        hashedVal = _reIndex(hashedVal, _capacity);
         for (int i = 0; i < _hashMap[hashedVal].size(); ++i)
         {
             if (_hashMap[hashedVal][i].first == key)
@@ -196,7 +196,7 @@ public:
                 --_currSize;
                 if (getLoadFactor() < _lowerLoadFactor)
                 {
-                    reHash(_capacity / 2);
+                    _reHash(_capacity / 2);
                 }
                 return true;
             }
@@ -212,7 +212,7 @@ public:
     const int bucketSize(const KeyT &key) const
     {
         size_t hashedIndex = std::hash<KeyT>{}(key);
-        hashedIndex = reIndex(hashedIndex, _capacity);
+        hashedIndex = _reIndex(hashedIndex, _capacity);
         return (int) _hashMap[hashedIndex].size();
     }
 
@@ -228,24 +228,24 @@ public:
         _currSize = 0;
     }
 
+    //-------------------------------------- iterator --------------------------------------
+
     class iterator
     {
     private:
         std::pair<KeyT, ValueT> *_pointer;
         HashMap<KeyT, ValueT> *_myMap;
-
         std::pair<size_t, size_t> getIndexOfItem(std::pair<KeyT, ValueT> pair)
         {
             size_t hashedVal = std::hash<KeyT>{}(pair.first);
             hashedVal = hashedVal & (_myMap->capacity() - 1);
             for (int i = 0; i < _myMap->_hashMap[hashedVal].size(); ++i)
             {
-                if(pair.first =  _myMap->_hashMap[hashedVal][i].first)
+                if(pair.first ==  _myMap->_hashMap[hashedVal][i].first)
                 {
                     return std::pair<int ,int>(hashedVal,i);
                 }
             }
-
         }
 
     public:
@@ -260,7 +260,7 @@ public:
         { return &*_pointer; }
         iterator& operator++()
         {
-            if(getIndexOfItem(*_pointer).second < _myMap->_hashMap[getIndexOfItem(*_pointer).first].size() -1)
+            if(getIndexOfItem(*_pointer).second < _myMap->_hashMap[getIndexOfItem(*_pointer).first].size()-1 )
             {
                 _pointer = &(_myMap->_hashMap[getIndexOfItem(*_pointer).first][getIndexOfItem(*_pointer).second + 1]);
             }
@@ -286,6 +286,13 @@ public:
             }
             return *this;
         }
+        iterator& operator++(int)
+        {
+            iterator &temp = *this;
+            ++(*this);
+            return temp;
+        }
+
         bool operator!=(iterator const& rhs) const
         { return _pointer != rhs._pointer; }
     };
@@ -306,6 +313,68 @@ public:
     {
         return iterator(nullptr);
     }
+    //-------------------------------------- operators --------------------------------------
+
+    HashMap& operator=(HashMap &other)
+    {
+        std::swap(this->_capacity, other._capacity);
+        std::swap(this->_currSize,other._currSize);
+        std::swap(this->_upperLoadFactor , other._upperLoadFactor);
+        std::swap(this->_lowerLoadFactor,other._lowerLoadFactor);
+        std::swap(this->_hashMap,other._hashMap);
+        return *this;
+    }
+
+    ValueT &operator[](const KeyT &index)
+    {
+        size_t hashedVal = std::hash<KeyT>{}(index);
+        hashedVal = _reIndex(hashedVal, _capacity);
+        if (containsKey(index))
+        {
+            for (auto &pair: _hashMap[hashedVal])
+            {
+                if(pair.first == index)
+                {
+                    return pair.second;
+                }
+            }
+
+            std::pair<KeyT,ValueT> newPair(index,ValueT{});
+            _hashMap[hashedVal].push_back(newPair);
+            return newPair.second;
+        }
+        else
+        {
+            std::pair<KeyT,ValueT> newPair(index,ValueT{});
+            _hashMap[hashedVal].push_back(newPair);
+            return newPair.second;
+        }
+
+    }
+
+    const ValueT &operator[](const KeyT &index) const
+    {
+        size_t hashedVal = std::hash<KeyT>{}(index);
+        hashedVal = _reIndex(hashedVal, _capacity);
+        if (containsKey(index))
+        {
+            for (const auto &pair: _hashMap[hashedVal])
+            {
+                if(pair.first == index)
+                {
+                    return pair.second;
+                }
+            }
+        }
+        else
+        {
+            std::pair<KeyT,ValueT> newPair(index,ValueT{});
+            _hashMap[hashedVal].push_back(newPair);
+            return newPair.second;
+        }
+    }
+
+
 
 
 };

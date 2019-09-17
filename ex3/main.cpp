@@ -20,12 +20,24 @@ int main()
     std::pair<int,int> myOau2(1,3);
 
     HashMap<int , int > hashMap;
+    HashMap<int , int > hashMap2;
+
+
 //    std::cout<<hashMap.empty()<<std::endl;
-    for (int i = 0; i <15 ; ++i)
+    for (int i = 0; i <8 ; ++i)
     {
         hashMap.insert(i,i*i);
     }
+    hashMap.insert(17,17);
+
+    hashMap[87] = 19;
+
 //    HashMap<int,int>::iterator it = hashMap.begin();
+//    it++;
+//    it++;
+
+    std::cout << hashMap[87]<< "lol\n";
+
     for (auto &it : hashMap)
         std::cout << it.first << " => " << it.second << '\n';
 
