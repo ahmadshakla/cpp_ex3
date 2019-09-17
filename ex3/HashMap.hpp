@@ -79,6 +79,11 @@ public:
         }
     }
 
+    ~HashMap()
+    {
+        delete[] _hashMap;
+    }
+
     //-------------------------------------- methods --------------------------------------
 
     /**
@@ -93,17 +98,20 @@ public:
     /**
      * @return the capacity of the map (the number of elements it can hold)
      */
-    const int capacity() const { return this->_capacity; }
+    const int capacity() const
+    { return this->_capacity; }
 
     /**
      * @return the load factor of the map, size/capacity
      */
-    const double getLoadFactor() const { return (double) _currSize / _capacity; }
+    const double getLoadFactor() const
+    { return (double) _currSize / _capacity; }
 
     /**
      * @return whether the map is empty or not
      */
-    const bool empty() const { return !_currSize; }
+    const bool empty() const
+    { return !_currSize; }
 
     /**
      * adds a new pair to the map
@@ -205,7 +213,7 @@ public:
     {
         size_t hashedIndex = std::hash<KeyT>{}(key);
         hashedIndex = reIndex(hashedIndex, _capacity);
-        return _hashMap[hashedIndex].size();
+        return (int) _hashMap[hashedIndex].size();
     }
 
     /**
@@ -223,12 +231,81 @@ public:
     class iterator
     {
     private:
-        std::pair<KeyT,ValueT>* _pointer;
+        std::pair<KeyT, ValueT> *_pointer;
+        HashMap<KeyT, ValueT> *_myMap;
+
+        std::pair<size_t, size_t> getIndexOfItem(std::pair<KeyT, ValueT> pair)
+        {
+            size_t hashedVal = std::hash<KeyT>{}(pair.first);
+            hashedVal = hashedVal & (_myMap->capacity() - 1);
+            for (int i = 0; i < _myMap->_hashMap[hashedVal].size(); ++i)
+            {
+                if(pair.first =  _myMap->_hashMap[hashedVal][i].first)
+                {
+                    return std::pair<int ,int>(hashedVal,i);
+                }
+            }
+
+        }
+
     public:
-        explicit iterator( std::pair<KeyT,ValueT>* N = nullptr) : _pointer(N) { }
-        std::pair<KeyT,ValueT>& operator*() const { return _pointer->first; }
-        std::pair<KeyT,ValueT>* operator->() const { return &_pointer->first; }
+        explicit iterator(std::pair<KeyT, ValueT> *N = nullptr,
+                          HashMap<KeyT, ValueT> *myMap = nullptr) : _pointer(N), _myMap(myMap)
+        {}
+
+        std::pair<KeyT, ValueT> &operator*() const
+        { return *_pointer; }
+
+        std::pair<KeyT, ValueT> *operator->() const
+        { return &*_pointer; }
+        iterator& operator++()
+        {
+            if(getIndexOfItem(*_pointer).second < _myMap->_hashMap[getIndexOfItem(*_pointer).first].size() -1)
+            {
+                _pointer = &(_myMap->_hashMap[getIndexOfItem(*_pointer).first][getIndexOfItem(*_pointer).second + 1]);
+            }
+            else{
+                bool flag = false;
+                for (size_t i = getIndexOfItem(*_pointer).first + 1 ; i < _myMap->capacity(); ++i)
+                {
+                    for (auto &item:_myMap->_hashMap[i])
+                    {
+                        _pointer = &item;
+                        flag = true;
+                        break;
+                    }
+                    if(flag)
+                    {
+                        break;
+                    }
+                }
+                if (!flag)
+                {
+                    _pointer =  nullptr;
+                }
+            }
+            return *this;
+        }
+        bool operator!=(iterator const& rhs) const
+        { return _pointer != rhs._pointer; }
     };
+
+
+    iterator begin()
+    {
+        for (int i = 0; i < capacity(); ++i)
+        {
+            for (auto &item:_hashMap[i])
+            {
+                return iterator(&item, this);
+            }
+        }
+        return iterator();
+    }
+    iterator end()
+    {
+        return iterator(nullptr);
+    }
 
 
 };
