@@ -52,6 +52,20 @@ private:
         }
     }
 
+     std::pair<size_t ,size_t > findPair(std::pair<KeyT, ValueT> *givenPair)
+    {
+        size_t hashedVal = std::hash<KeyT>{}(givenPair->first);
+        hashedVal = reIndex(hashedVal, _capacity);
+        for (size_t i = 0; i < _hashMap[hashedVal].size(); ++i)
+        {
+            if (_hashMap[hashedVal][i] == givenPair->first)
+            {
+                std::pair<size_t ,size_t > myPair(hashedVal, i);
+                return myPair;
+            }
+        }
+    }
+
 public:
     //-------------------------------------- constructors --------------------------------------
     explicit HashMap(double lowerLoadFactor = 0.25, double upperLoadFactor = 0.75)
@@ -223,12 +237,32 @@ public:
     class iterator
     {
     private:
-        std::pair<KeyT,ValueT>* _pointer;
+        std::pair<KeyT, ValueT> *_pointer;
     public:
-        explicit iterator( std::pair<KeyT,ValueT>* N = nullptr) : _pointer(N) { }
-        std::pair<KeyT,ValueT>& operator*() const { return _pointer->first; }
-        std::pair<KeyT,ValueT>* operator->() const { return &_pointer->first; }
+        explicit iterator(std::pair<KeyT, ValueT> *N = nullptr) : _pointer(N) {}
+
+        std::pair<KeyT, ValueT> &operator*() const { return *_pointer; }
+
+        std::pair<KeyT, ValueT> *operator->() const { return _pointer; }
+
+
     };
+
+    iterator begin()
+    {
+        for (int i = 0; i < capacity(); ++i)
+        {
+            for (std::pair<KeyT, ValueT> &pair : _hashMap[i])
+            {
+                return iterator(&pair);
+            }
+        }
+    }
+
+    iterator end()
+    {
+        return nullptr;
+    }
 
 
 };

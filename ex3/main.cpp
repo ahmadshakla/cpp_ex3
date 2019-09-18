@@ -21,15 +21,13 @@ int main()
 
     HashMap<int, int > hashMap;
 //    std::cout<<hashMap.empty()<<std::endl;
-    for (int i = 0; i <15 ; ++i)
+    for (int i = 1; i <15 ; ++i)
     {
         hashMap.insert(i,i*i);
     }
-    for (int i = 0; i <15 ; ++i)
-    {
-        hashMap.erase(i);
-    }
-    std::cout<<hashMap.capacity()<<std::endl;
+    HashMap<int ,int >::iterator it = hashMap.begin();
+
+    std::cout<<it->first<<std::endl;
 
 ////    std::cout<<hashMap.containsKey(98)<<std::endl;
 //    int i = 98;
