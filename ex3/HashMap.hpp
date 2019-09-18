@@ -11,6 +11,11 @@
 #ifndef CPP_EX3_HPP
 #define CPP_EX3_HPP
 
+/**
+ * a class representing the hashmap
+ * @tparam KeyT the key in the map
+ * @tparam ValueT the value in the map
+ */
 template<typename KeyT, typename ValueT>
 class HashMap
 {
@@ -20,6 +25,11 @@ private:
     double _lowerLoadFactor, _upperLoadFactor;
     int _capacity, _currSize;
 
+    /**
+     * @param hashedIndex the hash value we get from std::hash
+     * @param mapCapacity the current capacity of the map.
+     * @return an index in the range of the capacity of the map.
+     */
     const size_t _reIndex(size_t hashedIndex, int mapCapacity) const
     {
         return hashedIndex & (mapCapacity - 1);
@@ -67,8 +77,8 @@ public:
     }
 
     HashMap(std::vector<KeyT> keysVec, std::vector<ValueT> valuesVec)
-    : _lowerLoadFactor(0.25), _upperLoadFactor(0.75),
-            _capacity{16}, _currSize(0)
+            : _lowerLoadFactor(0.25), _upperLoadFactor(0.75),
+              _capacity{16}, _currSize(0)
     {
         _hashMap = new std::vector<std::pair<KeyT, ValueT> >[16];
 
@@ -83,21 +93,38 @@ public:
         }
     }
 
-    HashMap( HashMap<KeyT,ValueT> &other)
+    /**
+     * copy constructor
+     * @param other the other object we want to copy from
+     */
+    HashMap(HashMap<KeyT, ValueT> &other)
+            :
+            _lowerLoadFactor(other._lowerLoadFactor),
+            _upperLoadFactor(other._upperLoadFactor),
+            _capacity(other._capacity),
+            _currSize(0)
     {
-//        *this = other;
-//        HashMap();
-        this->_lowerLoadFactor = other._lowerLoadFactor;
-        this->_upperLoadFactor = other._upperLoadFactor;
-        this->_capacity = other._capacity;
-        this->_currSize = 0;
-        this->_hashMap =   new std::vector<std::pair<KeyT, ValueT> >[other._capacity];
-        for (const auto  &pair : other)
+        _hashMap = new std::vector<std::pair<KeyT, ValueT> >[other._capacity];
+        for (const auto &pair : other)
         {
-            insert(pair.first,pair.second);
+            insert(pair.first, pair.second);
         }
-
     }
+
+    /**
+     * move constructor
+     * @param other the other object that we want to *steal* from
+     */
+    HashMap(HashMap &&other) noexcept :
+
+            _hashMap(std::move(other._hashMap)),
+            _lowerLoadFactor(std::move(other._lowerLoadFactor)),
+            _upperLoadFactor(std::move(other._upperLoadFactor)),
+            _capacity(std::move(other.capacity())), _currSize(other._currSize)
+    {
+        other._hashMap = nullptr;
+//        other = nullptr;
+    };
 
     ~HashMap()
     {
@@ -118,20 +145,17 @@ public:
     /**
      * @return the capacity of the map (the number of elements it can hold)
      */
-    const int capacity() const
-    { return this->_capacity; }
+    const int capacity() const { return this->_capacity; }
 
     /**
      * @return the load factor of the map, size/capacity
      */
-    const double getLoadFactor() const
-    { return (double) _currSize / _capacity; }
+    const double getLoadFactor() const { return (double) _currSize / _capacity; }
 
     /**
      * @return whether the map is empty or not
      */
-    const bool empty() const
-    { return !_currSize; }
+    const bool empty() const { return !_currSize; }
 
     /**
      * adds a new pair to the map
@@ -286,22 +310,20 @@ public:
          * @param  a pointer to  myMap the hashmap object that we are in.
          */
         explicit const_iterator(std::pair<KeyT, ValueT> *N = nullptr,
-                          HashMap<KeyT, ValueT> *myMap = nullptr) : _pointer(N), _myMap(myMap)
-        {}
+                                HashMap<KeyT, ValueT> *myMap = nullptr) : _pointer(N),
+                                                                          _myMap(myMap) {}
 
         /**
          * the * operator
          * @return the a pointer to the pair
          */
-        std::pair<KeyT, ValueT> &operator*() const
-        { return *_pointer; }
+        std::pair<KeyT, ValueT> &operator*() const { return *_pointer; }
 
         /**
          * the -> operator
          * @return the pair
          */
-        std::pair<KeyT, ValueT> *operator->() const
-        { return _pointer; }
+        std::pair<KeyT, ValueT> *operator->() const { return _pointer; }
 
         /**
          * the prefix increment operator
@@ -343,7 +365,7 @@ public:
          * the postfix increment operator
          * @return  an iterator to the next element
          */
-        const_iterator &operator++(int)
+        const HashMap::const_iterator operator++(int)
         {
             const_iterator &temp = *this;
             ++(*this);
@@ -355,8 +377,7 @@ public:
          * @param rhs the operator we wish to compare with
          * @return true if they are not equal, false if they are
          */
-        bool operator!=(const_iterator const &rhs) const
-        { return _pointer != rhs._pointer; }
+        bool operator!=(const_iterator const &rhs) const { return _pointer != rhs._pointer; }
 
 
         /**
@@ -364,8 +385,7 @@ public:
         * @param rhs the operator we wish to compare with
         * @return false if they are not equal, true if they are
         */
-        bool operator==(const_iterator const &rhs) const
-        { return _pointer == rhs._pointer; }
+        bool operator==(const_iterator const &rhs) const { return _pointer == rhs._pointer; }
     };
 
 
@@ -400,6 +420,7 @@ public:
      */
     HashMap &operator=(HashMap &other)
     {
+        //TODO check why it cant be const
         std::swap(this->_capacity, other._capacity);
         std::swap(this->_currSize, other._currSize);
         std::swap(this->_upperLoadFactor, other._upperLoadFactor);
@@ -428,14 +449,14 @@ public:
             }
 
             std::pair<KeyT, ValueT> newPair(index, ValueT{});
-            _hashMap[hashedVal].push_back(newPair);
-            return _hashMap[hashedVal][_hashMap[hashedVal].size() - 1].second;
+            insert(newPair.first, newPair.second);
+            return at(newPair.first);
         }
         else
         {
             std::pair<KeyT, ValueT> newPair(index, ValueT{});
-            _hashMap[hashedVal].push_back(newPair);
-            return _hashMap[hashedVal][_hashMap[hashedVal].size() - 1].second;
+            insert(newPair.first, newPair.second);
+            return at(newPair.first);
         }
 
     }
@@ -462,8 +483,8 @@ public:
         else
         {
             std::pair<KeyT, ValueT> newPair(index, ValueT{});
-            _hashMap[hashedVal].push_back(newPair);
-            return newPair.second;
+            insert(newPair.first, newPair.second);
+            return at(newPair.first);
         }
     }
 
@@ -474,6 +495,11 @@ public:
     */
     const bool operator==(const HashMap &other)
     {
+        if (this->_currSize != other.size() || this->_upperLoadFactor != other._upperLoadFactor ||
+            this->_lowerLoadFactor != other._lowerLoadFactor || this->_capacity != other._capacity)
+        {
+            return false;
+        }
         for (const auto &pair:*this)
         {
             if (!other.containsKey(pair.first))
