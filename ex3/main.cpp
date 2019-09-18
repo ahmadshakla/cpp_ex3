@@ -19,30 +19,51 @@ int main()
     std::pair<int,int> myOau(1,2);
     std::pair<int,int> myOau2(1,3);
 
-    HashMap<int, int > hashMap;
+    HashMap<int , int > hashMap;
+    HashMap<int , int > hashMap2(0.1,0.5);
+
+
+
 //    std::cout<<hashMap.empty()<<std::endl;
-    for (int i = 1; i <15 ; ++i)
+    for (int i = 0; i <14 ; ++i)
     {
         hashMap.insert(i,i*i);
+        hashMap2.insert(i,i*i);
     }
-    HashMap<int ,int >::iterator it = hashMap.begin();
+    hashMap.insert(17,17);
 
-    std::cout<<it->first<<std::endl;
+    std::cout<<"1 size " << (hashMap==hashMap2) << std::endl;
+//
+//    hashMap[86] = 19;
 
-////    std::cout<<hashMap.containsKey(98)<<std::endl;
-//    int i = 98;
-//    hashMap.at(98) = 12;
-//    std::cout<<hashMap.at(98)<<std::endl;
+//    HashMap<int,int>::iterator it = hashMap.begin();
+//    it++;
+//    it++;
 
-//    std::cout<<hashMap.at(9546);
-//    std::vector<int> myVec;
-//    myVec.push_back(1);
-//    myVec.push_back(2);
-//    myVec.push_back(3);
-//    myVec.erase(myVec.begin()+2);
-//    for (const int &i:myVec)
+//    std::cout << hashMap[86]<< "lol\n";
+
+    for (auto &it : hashMap)
+        std::cout << it.first << " => " << it.second << '\n';
+
+
+//    for (int i = 0; i <15 ; ++i)
 //    {
-//        std::cout<<myVec[i]<<std::endl;
+//        hashMap.erase(i);
+//    }
+    std::cout<<hashMap.capacity()<<std::endl;
+
+
+std::map<int,int > myMap;
+myMap[0] = 1;
+std::map<int ,int> myMap2(myMap);
+myMap[23] = 2343;
+    std::cout<<myMap.size()<<std::endl;
+    myMap.erase(23);
+//    std::cout<<(myMap.at(234234) == 234)<<std::endl;
+
+
+//myMap2["hi"] = "bye";
+//myMap2 = myMap;
 
 
 
