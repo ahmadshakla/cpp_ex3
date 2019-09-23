@@ -272,145 +272,6 @@ public:
         _currSize = 0;
     }
 
-    //-------------------------------------- const_iterator --------------------------------------
-
-    /**
-     * the iterator class
-     */
-    class const_iterator
-    {
-    private:
-        std::pair<KeyT, ValueT> *_pointer;
-        HashMap<KeyT, ValueT> *_myMap;
-
-        /**
-         * a function that takes a pair of key and value and returns it's index in the
-         * map
-         * @param pair the pair we want to find
-         * @return the index represented as pair of size_t
-         */
-        std::pair<size_t, size_t> _getIndexOfItem(std::pair<KeyT, ValueT> pair)
-        {
-            size_t hashedVal = std::hash<KeyT>{}(pair.first);
-            hashedVal = hashedVal & (_myMap->capacity() - 1);
-            for (int i = 0; i < _myMap->_hashMap[hashedVal].size(); ++i)
-            {
-                if (pair.first == _myMap->_hashMap[hashedVal][i].first)
-                {
-                    return std::pair<int, int>(hashedVal, i);
-                }
-            }
-            return std::pair<int, int>();
-        }
-
-    public:
-        /**
-         * the iterators constructor, that initializes a new iterator
-         * @param N a pointer to the pair we are at at the moment
-         * @param  a pointer to  myMap the hashmap object that we are in.
-         */
-        explicit const_iterator(std::pair<KeyT, ValueT> *N = nullptr,
-                                HashMap<KeyT, ValueT> *myMap = nullptr) : _pointer(N),
-                                                                          _myMap(myMap) {}
-
-        /**
-         * the * operator
-         * @return the a pointer to the pair
-         */
-        std::pair<KeyT, ValueT> &operator*() const { return *_pointer; }
-
-        /**
-         * the -> operator
-         * @return the pair
-         */
-        std::pair<KeyT, ValueT> *operator->() const { return _pointer; }
-
-        /**
-         * the prefix increment operator
-         * @return  an iterator to the next element
-         */
-        const_iterator &operator++()
-        {
-            if (_getIndexOfItem(*_pointer).second <
-                _myMap->_hashMap[_getIndexOfItem(*_pointer).first].size() - 1)
-            {
-                _pointer = &(_myMap->_hashMap[_getIndexOfItem(*_pointer).first][
-                        _getIndexOfItem(*_pointer).second + 1]);
-            }
-            else
-            {
-                bool flag = false;
-                for (size_t i = _getIndexOfItem(*_pointer).first + 1; i < _myMap->capacity(); ++i)
-                {
-                    for (auto &item:_myMap->_hashMap[i])
-                    {
-                        _pointer = &item;
-                        flag = true;
-                        break;
-                    }
-                    if (flag)
-                    {
-                        break;
-                    }
-                }
-                if (!flag)
-                {
-                    _pointer = nullptr;
-                }
-            }
-            return *this;
-        }
-
-        /**
-         * the postfix increment operator
-         * @return  an iterator to the next element
-         */
-        const HashMap::const_iterator operator++(int)
-        {
-            const_iterator &temp = *this;
-            ++(*this);
-            return temp;
-        }
-
-        /**
-         * the not equals operator
-         * @param rhs the operator we wish to compare with
-         * @return true if they are not equal, false if they are
-         */
-        bool operator!=(const_iterator const &rhs) const { return _pointer != rhs._pointer; }
-
-
-        /**
-        * the  equals operator
-        * @param rhs the operator we wish to compare with
-        * @return false if they are not equal, true if they are
-        */
-        bool operator==(const_iterator const &rhs) const { return _pointer == rhs._pointer; }
-    };
-
-
-    /**
-     * @return an iterator to the first element to the map
-     */
-    const_iterator begin()
-    {
-        for (int i = 0; i < capacity(); ++i)
-        {
-            for (auto &item:_hashMap[i])
-            {
-                return const_iterator(&item, this);
-            }
-        }
-        return const_iterator();
-    }
-
-    /**
-     * @return an iterator to the last element of the map
-     */
-    const_iterator end()
-    {
-        return const_iterator(nullptr);
-    }
     //-------------------------------------- operators --------------------------------------
 
     /**
@@ -522,6 +383,147 @@ public:
     const bool operator!=(const HashMap &other)
     {
         return !(*this == other);
+    }
+
+    //-------------------------------------- iterator --------------------------------------
+
+    /**
+     * the iterator class
+     */
+    class iterator
+    {
+    private:
+        std::pair<KeyT, ValueT> *_pointer;
+        HashMap<KeyT, ValueT> *_myMap;
+
+        /**
+         * a function that takes a pair of key and value and returns it's index in the
+         * map
+         * @param pair the pair we want to find
+         * @return the index represented as pair of size_t
+         */
+        std::pair<size_t, size_t> _getIndexOfItem(std::pair<KeyT, ValueT> pair)
+        {
+            size_t hashedVal = std::hash<KeyT>{}(pair.first);
+            hashedVal = hashedVal & (_myMap->capacity() - 1);
+            for (int i = 0; i < _myMap->_hashMap[hashedVal].size(); ++i)
+            {
+                if (pair.first == _myMap->_hashMap[hashedVal][i].first)
+                {
+                    return std::pair<int, int>(hashedVal, i);
+                }
+            }
+            return std::pair<int, int>();
+        }
+
+    public:
+        /**
+         * the iterators constructor, that initializes a new iterator
+         * @param N a pointer to the pair we are at at the moment
+         * @param  a pointer to  myMap the hashmap object that we are in.
+         */
+        explicit iterator(std::pair<KeyT, ValueT> *N = nullptr,
+                                HashMap<KeyT, ValueT> *myMap = nullptr) : _pointer(N),
+                                                                          _myMap(myMap) {}
+
+        /**
+         * the * operator
+         * @return the a pointer to the pair
+         */
+        std::pair<KeyT, ValueT> &operator*() const { return *_pointer; }
+
+        /**
+         * the -> operator
+         * @return the pair
+         */
+        std::pair<KeyT, ValueT> *operator->() const { return _pointer; }
+
+        /**
+         * the prefix increment operator
+         * @return  an iterator to the next element
+         */
+        iterator &operator++()
+        {
+            if (_getIndexOfItem(*_pointer).second <
+                _myMap->_hashMap[_getIndexOfItem(*_pointer).first].size() - 1)
+            {
+                _pointer = &(_myMap->_hashMap[_getIndexOfItem(*_pointer).first][
+                        _getIndexOfItem(*_pointer).second + 1]);
+            }
+            else
+            {
+                bool flag = false;
+                for (size_t i = _getIndexOfItem(*_pointer).first + 1; i < _myMap->capacity(); ++i)
+                {
+                    for (auto &item:_myMap->_hashMap[i])
+                    {
+                        _pointer = &item;
+                        flag = true;
+                        break;
+                    }
+                    if (flag)
+                    {
+                        break;
+                    }
+                }
+                if (!flag)
+                {
+                    _pointer = nullptr;
+                }
+            }
+            return *this;
+        }
+
+        /**
+         * the postfix increment operator
+         * @return  an iterator to the next element
+         */
+        const HashMap::iterator operator++(int)
+        {
+            iterator &temp = *this;
+            ++(*this);
+            return temp;
+        }
+
+        /**
+         * the not equals operator
+         * @param rhs the operator we wish to compare with
+         * @return true if they are not equal, false if they are
+         */
+        bool operator!=(iterator const &rhs) const { return _pointer != rhs._pointer; }
+
+
+        /**
+        * the  equals operator
+        * @param rhs the operator we wish to compare with
+        * @return false if they are not equal, true if they are
+        */
+        bool operator==(iterator const &rhs) const { return _pointer == rhs._pointer; }
+    };
+
+//    using const_iterator = iterator;
+
+    /**
+     * @return an iterator to the first element to the map
+     */
+    iterator begin()
+    {
+        for (int i = 0; i < capacity(); ++i)
+        {
+            for (const auto &item:_hashMap[i])
+            {
+                return iterator(&item, this);
+            }
+        }
+        return iterator();
+    }
+
+    /**
+     * @return an iterator to the last element of the map
+     */
+    iterator end()
+    {
+        return iterator(nullptr);
     }
 
 
