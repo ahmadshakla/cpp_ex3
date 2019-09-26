@@ -61,6 +61,14 @@ private:
             _hashMap = newHashMap;
         }
     }
+    void _swap(HashMap &curr,HashMap &other)
+    {
+        std::swap(this->_capacity, other._capacity);
+        std::swap(this->_currSize, other._currSize);
+        std::swap(this->_upperLoadFactor, other._upperLoadFactor);
+        std::swap(this->_lowerLoadFactor, other._lowerLoadFactor);
+        std::swap(this->_hashMap, other._hashMap);
+    }
 
 public:
     //-------------------------------------- constructors --------------------------------------
@@ -71,7 +79,7 @@ public:
         if (lowerLoadFactor > upperLoadFactor || upperLoadFactor > 1 || upperLoadFactor < 0 ||
             lowerLoadFactor < 0 || lowerLoadFactor > 1)
         {
-            // TODO exception
+            throw std::invalid_argument("invalid input");
         }
         _hashMap = new std::vector<std::pair<KeyT, ValueT> >[16];
     }
@@ -84,8 +92,7 @@ public:
 
         if (keysVec.size() != valuesVec.size())
         {
-            // TODO exception
-            throw 0;
+            throw std::out_of_range("invalid input");
         }
         for (int i = 0; i < keysVec.size(); ++i)
         {
@@ -188,6 +195,10 @@ public:
      */
     bool containsKey(const KeyT &key) const
     {
+        if(this->_hashMap == nullptr)
+        {
+            return false;
+        }
         size_t hashedVal = std::hash<KeyT>{}(key);
         hashedVal = _reIndex(hashedVal, _capacity);
 
@@ -206,8 +217,9 @@ public:
      * @param key the key of the element that we want to find it's value
      * @return the value of the given key
      */
-    ValueT &at(const KeyT key) const
+    ValueT &at(const KeyT key)
     {
+
         size_t hashedVal = _reIndex(std::hash<KeyT>{}(key), _capacity);
         for (std::pair<KeyT, ValueT> &pair : _hashMap[hashedVal])
         {
@@ -255,6 +267,10 @@ public:
      */
     const int bucketSize(const KeyT &key) const
     {
+        if(!containsKey(key))
+        {
+            throw std::out_of_range("bucketSize");
+        }
         size_t hashedIndex = std::hash<KeyT>{}(key);
         hashedIndex = _reIndex(hashedIndex, _capacity);
         return (int) _hashMap[hashedIndex].size();
@@ -277,11 +293,11 @@ public:
     /**
      * the iterator class
      */
-    class const_iterator
+    class iterator
     {
     private:
         std::pair<KeyT, ValueT> *_pointer;
-        HashMap<KeyT, ValueT> *_myMap;
+        const HashMap<KeyT, ValueT> *_myMap;
 
         /**
          * a function that takes a pair of key and value and returns it's index in the
@@ -309,27 +325,27 @@ public:
          * @param N a pointer to the pair we are at at the moment
          * @param  a pointer to  myMap the hashmap object that we are in.
          */
-        explicit const_iterator(std::pair<KeyT, ValueT> *N = nullptr,
-                                HashMap<KeyT, ValueT> *myMap = nullptr) : _pointer(N),
+        explicit iterator(std::pair<KeyT, ValueT> *N = nullptr,
+                                const HashMap<KeyT, ValueT> *myMap = nullptr) : _pointer(N),
                                                                           _myMap(myMap) {}
 
         /**
          * the * operator
          * @return the a pointer to the pair
          */
-        std::pair<KeyT, ValueT> &operator*() const { return *_pointer; }
+        const std::pair<KeyT, ValueT> &operator*() const { return *_pointer; }
 
         /**
          * the -> operator
          * @return the pair
          */
-        std::pair<KeyT, ValueT> *operator->() const { return _pointer; }
+        const std::pair<KeyT, ValueT> *operator->() const { return _pointer; }
 
         /**
          * the prefix increment operator
          * @return  an iterator to the next element
          */
-        const_iterator &operator++()
+        const iterator &operator++()
         {
             if (_getIndexOfItem(*_pointer).second <
                 _myMap->_hashMap[_getIndexOfItem(*_pointer).first].size() - 1)
@@ -365,9 +381,9 @@ public:
          * the postfix increment operator
          * @return  an iterator to the next element
          */
-        const HashMap::const_iterator operator++(int)
+        const HashMap::iterator operator++(int)
         {
-            const_iterator &temp = *this;
+            iterator &temp = *this;
             ++(*this);
             return temp;
         }
@@ -377,7 +393,7 @@ public:
          * @param rhs the operator we wish to compare with
          * @return true if they are not equal, false if they are
          */
-        bool operator!=(const_iterator const &rhs) const { return _pointer != rhs._pointer; }
+        bool operator!=(iterator const &rhs) const { return _pointer != rhs._pointer; }
 
 
         /**
@@ -385,18 +401,18 @@ public:
         * @param rhs the operator we wish to compare with
         * @return false if they are not equal, true if they are
         */
-        bool operator==(const_iterator const &rhs) const { return _pointer == rhs._pointer; }
+        bool operator==(iterator const &rhs) const { return _pointer == rhs._pointer; }
     };
 
-
+    using const_iterator = iterator;
     /**
      * @return an iterator to the first element to the map
      */
-    const_iterator begin()
+    const_iterator begin() const
     {
         for (int i = 0; i < capacity(); ++i)
         {
-            for (auto &item:_hashMap[i])
+            for (auto& item:_hashMap[i])
             {
                 return const_iterator(&item, this);
             }
@@ -407,7 +423,30 @@ public:
     /**
      * @return an iterator to the last element of the map
      */
-    const_iterator end()
+    const_iterator end() const
+    {
+        return const_iterator(nullptr);
+    }
+
+    /**
+     * @return an iterator to the first element to the map
+     */
+    const_iterator cbegin() const
+    {
+        for (int i = 0; i < capacity(); ++i)
+        {
+            for ( auto &item:_hashMap[i])
+            {
+                return const_iterator(&item, this);
+            }
+        }
+        return const_iterator();
+    }
+
+    /**
+     * @return an iterator to the last element of the map
+     */
+    const_iterator cend() const
     {
         return const_iterator(nullptr);
     }
@@ -418,14 +457,9 @@ public:
      * @param other the map we want to assign from
      * @return the new assigned to map
      */
-    HashMap &operator=(HashMap &other)
+    HashMap &operator=(HashMap other)
     {
-        //TODO check why it cant be const
-        std::swap(this->_capacity, other._capacity);
-        std::swap(this->_currSize, other._currSize);
-        std::swap(this->_upperLoadFactor, other._upperLoadFactor);
-        std::swap(this->_lowerLoadFactor, other._lowerLoadFactor);
-        std::swap(this->_hashMap, other._hashMap);
+        _swap(*this,other);
         return *this;
     }
 
@@ -470,22 +504,16 @@ public:
     {
         size_t hashedVal = std::hash<KeyT>{}(index);
         hashedVal = _reIndex(hashedVal, _capacity);
-        if (containsKey(index))
+
+        for (const auto &pair: _hashMap[hashedVal])
         {
-            for (const auto &pair: _hashMap[hashedVal])
+            if (pair.first == index)
             {
-                if (pair.first == index)
-                {
-                    return pair.second;
-                }
+                return pair.second;
             }
         }
-        else
-        {
-            std::pair<KeyT, ValueT> newPair(index, ValueT{});
-            insert(newPair.first, newPair.second);
-            return at(newPair.first);
-        }
+
+
     }
 
     /**
