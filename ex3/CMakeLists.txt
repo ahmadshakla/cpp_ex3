@@ -4,4 +4,4 @@ project(ex3)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS"$CMAKE_CXX_FLAGS -Wall")
 
-add_executable(ex3 main.cpp HashMap.hpp)
+add_executable(ex3 HashMapTester.cpp HashMap.hpp)
